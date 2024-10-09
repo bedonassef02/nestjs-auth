@@ -9,6 +9,7 @@ import { JwtService } from '@nestjs/jwt';
 import jwtConfig from '../config/jwt.config';
 import { ConfigType } from '@nestjs/config';
 import { ActiveUserData } from '../interfaces/active-user-data.interface';
+import { RefreshTokenDto } from './dto/refresh-token.dto';
 
 @Injectable()
 export class AuthService {
@@ -45,20 +46,48 @@ export class AuthService {
         if (!isEqual) {
             throw new UnauthorizedException('Password mismatch with user');
         }
-        const accessToken = await this.jwtService.signAsync(
+        return await this.generateTokens(user);
+    }
+
+    private async generateTokens(user: User) {
+        const [accessToken, refreshToken] = await Promise.all([
+            this.signToken<Partial<ActiveUserData>>(user.id, this.jwtConfigration.accessTokenTtl, { email: user.email }),
+            this.signToken(user.id, this.jwtConfigration.refreshTokenTtl)
+        ]);
+        return {
+            accessToken,
+            refreshToken,
+        };
+    }
+
+    private async signToken<T>(userId: number, expiresIn: number, payload?: T) {
+        return await this.jwtService.signAsync(
             {
-                sub: user.id,
-                email: user.email
-            } as ActiveUserData,
+                sub: userId,
+                ...payload
+            },
             {
                 audience: this.jwtConfigration.audience,
                 issuer: this.jwtConfigration.issuer,
                 secret: this.jwtConfigration.secret,
-                expiresIn: this.jwtConfigration.accessTokenTtl,
+                expiresIn,
             }
-        )
-        return {
-            accessToken
+        );
+    }
+
+    async refreshToken(refreshTokenDto: RefreshTokenDto) {
+        try {
+            const { sub } = await this.jwtService.verifyAsync<
+                Pick<ActiveUserData, 'sub'>
+            >(refreshTokenDto.refreshToken, {
+                secret: this.jwtConfigration.secret,
+                audience: this.jwtConfigration.audience,
+                issuer: this.jwtConfigration.issuer,
+            })
+            const user = await this.userRepository.findOneByOrFail({ id: sub })
+            return this.generateTokens(user);
+        } catch (err) {
+            throw new UnauthorizedException()
         }
     }
 }
