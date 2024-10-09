@@ -10,7 +10,10 @@ import { Permissions } from 'src/iam/authorization/decorators/permissions.decora
 import { Permission } from 'src/iam/authorization/permission.type';
 import { Policies } from 'src/iam/authorization/decorators/policies.decorator';
 import { FrameworkContributorPolicy } from 'src/iam/authorization/polices/framework-contributor.policy';
+import { Auth } from 'src/iam/auth/decorators/auth.decorator';
+import { AuthType } from 'src/iam/auth/enums/auth-type.enum';
 
+@Auth(AuthType.Bearer, AuthType.ApiKey)
 @Controller('coffee')
 export class CoffeeController {
   constructor(private readonly coffeeService: CoffeeService) { }
