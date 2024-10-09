@@ -55,7 +55,10 @@ export class AuthService {
     private async generateTokens(user: User) {
         const refreshTokenId = randomUUID();
         const [accessToken, refreshToken] = await Promise.all([
-            this.signToken<Partial<ActiveUserData>>(user.id, this.jwtConfigration.accessTokenTtl, { email: user.email, role: user.role }),
+            this.signToken<Partial<ActiveUserData>>(user.id, this.jwtConfigration.accessTokenTtl, { email: user.email, role: user.role,
+                // Warning: must be light weight => you can make ids or save in db  
+                permissions: user.permissions
+             }),
             this.signToken(user.id, this.jwtConfigration.refreshTokenTtl, { refreshTokenId })
         ]);
         await this.refreshTokenIdsStorate.insert(user.id, refreshTokenId);

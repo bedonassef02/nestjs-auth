@@ -13,6 +13,7 @@ import { AccessTokenGuard } from './auth/guards/access-token.guard';
 import { AuthGuard } from './auth/guards/auth.guard';
 import { RefreshTokenIdsStorage } from './auth/refresh-token-ids.storage/refresh-token-ids.storage';
 import { RolesGuard } from './authorization/guards/roles.guard';
+import { PermissionsGuard } from './authorization/guards/permissions.guard';
 
 @Module({
   imports:[TypeOrmModule.forFeature([User]),
@@ -30,7 +31,8 @@ import { RolesGuard } from './authorization/guards/roles.guard';
     },
     {
       provide: APP_GUARD,
-      useClass: RolesGuard
+      // useClass: RolesGuard
+      useClass: PermissionsGuard
     },
     AccessTokenGuard,
     RefreshTokenIdsStorage,
