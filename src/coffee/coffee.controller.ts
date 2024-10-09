@@ -2,10 +2,12 @@ import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/commo
 import { CoffeeService } from './coffee.service';
 import { CreateCoffeeDto } from './dto/create-coffee.dto';
 import { UpdateCoffeeDto } from './dto/update-coffee.dto';
+import { ActiveUser } from 'src/iam/decorators/active-user.decorator';
+import { ActiveUserData } from 'src/iam/interfaces/active-user-data.interface';
 
 @Controller('coffee')
 export class CoffeeController {
-  constructor(private readonly coffeeService: CoffeeService) {}
+  constructor(private readonly coffeeService: CoffeeService) { }
 
   @Post()
   create(@Body() createCoffeeDto: CreateCoffeeDto) {
@@ -13,7 +15,8 @@ export class CoffeeController {
   }
 
   @Get()
-  findAll() {
+  findAll(@ActiveUser() user: ActiveUserData) {
+    console.log(user.email);
     return this.coffeeService.findAll();
   }
 
