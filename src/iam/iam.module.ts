@@ -19,6 +19,7 @@ import { FrameworkContributorPolicyHandler } from './authorization/polices/frame
 import { ApiKeysService } from './auth/api-keys.service';
 import { ApiKey } from 'src/users/api-keys/entities/api-key.entity';
 import { ApiKeyGuard } from './auth/guards/api-key.guard';
+import { OtpAuthService } from './auth/otp-auth.service';
 
 @Module({
   imports:[TypeOrmModule.forFeature([User, ApiKey]),
@@ -46,6 +47,7 @@ import { ApiKeyGuard } from './auth/guards/api-key.guard';
     PolicyHandlerStorate,
     FrameworkContributorPolicyHandler,
     ApiKeysService,
+    OtpAuthService,
   ],
   controllers: [AuthController]
 })

@@ -12,6 +12,7 @@ import { ActiveUserData } from '../interfaces/active-user-data.interface';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { IvalidatedRefreshTokenError, RefreshTokenIdsStorage } from './refresh-token-ids.storage/refresh-token-ids.storage';
 import { randomUUID } from 'crypto';
+import { OtpAuthService } from './otp-auth.service';
 
 @Injectable()
 export class AuthService {
@@ -21,6 +22,7 @@ export class AuthService {
         private readonly jwtService: JwtService,
         @Inject(jwtConfig.KEY) private readonly jwtConfigration: ConfigType<typeof jwtConfig>,
         private readonly refreshTokenIdsStorate: RefreshTokenIdsStorage,
+        private readonly otpAuthService: OtpAuthService,
     ) { }
 
     async signUp(signUpDto: SignUpDto) {
@@ -49,16 +51,23 @@ export class AuthService {
         if (!isEqual) {
             throw new UnauthorizedException('Password mismatch with user');
         }
+        if(user.isTfaEnabled){
+            const isValid = this.otpAuthService.verifyCode(signInDto.tfaCode, user.tfaSecret);
+            if(!isValid){
+                throw new UnauthorizedException('Invalid TFA Code');
+            }
+        }
         return await this.generateTokens(user);
     }
 
     private async generateTokens(user: User) {
         const refreshTokenId = randomUUID();
         const [accessToken, refreshToken] = await Promise.all([
-            this.signToken<Partial<ActiveUserData>>(user.id, this.jwtConfigration.accessTokenTtl, { email: user.email, role: user.role,
+            this.signToken<Partial<ActiveUserData>>(user.id, this.jwtConfigration.accessTokenTtl, {
+                email: user.email, role: user.role,
                 // Warning: must be light weight => you can make ids or save in db  
                 permissions: user.permissions
-             }),
+            }),
             this.signToken(user.id, this.jwtConfigration.refreshTokenTtl, { refreshTokenId })
         ]);
         await this.refreshTokenIdsStorate.insert(user.id, refreshTokenId);
@@ -86,7 +95,7 @@ export class AuthService {
     async refreshToken(refreshTokenDto: RefreshTokenDto) {
         try {
             const { sub, refreshTokenId } = await this.jwtService.verifyAsync<
-                Pick<ActiveUserData, 'sub'> & {refreshTokenId: string}
+                Pick<ActiveUserData, 'sub'> & { refreshTokenId: string }
             >(refreshTokenDto.refreshToken, {
                 secret: this.jwtConfigration.secret,
                 audience: this.jwtConfigration.audience,
@@ -94,14 +103,14 @@ export class AuthService {
             })
             const user = await this.userRepository.findOneByOrFail({ id: sub })
             const isValid = await this.refreshTokenIdsStorate.validate(user.id, refreshTokenId);
-            if(isValid){
+            if (isValid) {
                 await this.refreshTokenIdsStorate.invalidate(user.id)
-            }else{
+            } else {
                 throw new Error('Refresh Token is invalid')
             }
             return this.generateTokens(user);
         } catch (err) {
-            if (err instanceof IvalidatedRefreshTokenError){
+            if (err instanceof IvalidatedRefreshTokenError) {
                 // Take Action: notify user that his refresh token might have been stolen?
                 throw new UnauthorizedException('Access denied')
             }

@@ -7,17 +7,22 @@ import { ApiKey } from "../api-keys/entities/api-key.entity";
 export class User {
     @PrimaryGeneratedColumn()
     id: number;
-    @Column({unique: true})
+    @Column({ unique: true })
     email: string;
     @Column()
     password: string;
-    @Column({enum: Role, default : Role.Regular})
+    @Column({ enum: Role, default: Role.Regular })
     role: Role;
 
-    @Column({enum: Permission, default: [], type: 'json'})
+    @Column({ enum: Permission, default: [], type: 'json' })
     permissions: PermissionType[];
 
     @JoinTable()
-    @OneToMany((type)=> ApiKey, (apiKey)=> apiKey.user)
+    @OneToMany((type) => ApiKey, (apiKey) => apiKey.user)
     apiKeys: ApiKey[];
+
+    @Column({ default: false })
+    isTfaEnabled: boolean;
+    @Column({ nullable: true })
+    tfaSecret: string;
 }
