@@ -20,6 +20,8 @@ import { ApiKeysService } from './auth/api-keys.service';
 import { ApiKey } from 'src/users/api-keys/entities/api-key.entity';
 import { ApiKeyGuard } from './auth/guards/api-key.guard';
 import { OtpAuthService } from './auth/otp-auth.service';
+import { GoogleAuthService } from './auth/social/google-auth.service';
+import { GoogleAuthController } from './auth/social/google-auth.controller';
 
 @Module({
   imports:[TypeOrmModule.forFeature([User, ApiKey]),
@@ -48,7 +50,8 @@ import { OtpAuthService } from './auth/otp-auth.service';
     FrameworkContributorPolicyHandler,
     ApiKeysService,
     OtpAuthService,
+    GoogleAuthService,
   ],
-  controllers: [AuthController]
+  controllers: [AuthController, GoogleAuthController]
 })
 export class IamModule {}

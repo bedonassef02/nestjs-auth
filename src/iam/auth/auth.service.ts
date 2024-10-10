@@ -60,7 +60,7 @@ export class AuthService {
         return await this.generateTokens(user);
     }
 
-    private async generateTokens(user: User) {
+    async generateTokens(user: User) {
         const refreshTokenId = randomUUID();
         const [accessToken, refreshToken] = await Promise.all([
             this.signToken<Partial<ActiveUserData>>(user.id, this.jwtConfigration.accessTokenTtl, {

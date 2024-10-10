@@ -9,7 +9,7 @@ export class User {
     id: number;
     @Column({ unique: true })
     email: string;
-    @Column()
+    @Column({ nullable: true })
     password: string;
     @Column({ enum: Role, default: Role.Regular })
     role: Role;
@@ -25,4 +25,7 @@ export class User {
     isTfaEnabled: boolean;
     @Column({ nullable: true })
     tfaSecret: string;
+
+    @Column({ nullable: true })
+    googleId: string;
 }
